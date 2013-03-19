@@ -134,7 +134,7 @@ data TxOut =
     deriving ( Show, Read, Ord, Eq )
 
 instance FromJSON TxOut where
-    parseJSON (Object o) = TxOut <$> (unwrapBTC <$> o .: "value")
+    parseJSON (Object o) = TxOut <$> o .: "value"
                                  <*> o .: "scriptPubKey"
     parseJSON _ = mzero
 
@@ -213,7 +213,7 @@ instance FromJSON UnspentTransaction where
                                               <*> o .:  "vout"
                                               <*> o .:  "scriptPubKey"
                                               <*> o .:? "redeemScript"
-                                              <*> (unwrapBTC <$> o .:  "amount")
+                                              <*> o .:  "amount"
                                               <*> o .:  "confirmations"
     parseJSON _ = mzero
 

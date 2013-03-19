@@ -17,16 +17,13 @@ module Network.Bitcoin.Internal ( module Network.Bitcoin.Types
                                 , callApi
                                 , callApi'
                                 , tj
-                                , WrappedBTC(..)
                                 , AddrAddress(..)
                                 ) where
 
 import           Control.Applicative
-import           Control.Arrow
 import           Control.Exception
 import           Control.Monad
 import           Data.Aeson
-import           Data.Attoparsec.Number
 import           Data.Maybe
 import           Data.Vector ( Vector )
 import qualified Data.Vector          as V
@@ -139,25 +136,11 @@ tj :: ToJSON a => a -> Value
 tj = toJSON
 {-# INLINE tj #-}
 
--- | Used to provide a FromJSON instance for fixed-point bitcoins.
---   This can be removed after <https://github.com/bos/aeson/pull/89> gets
---   merged into master, and is released on Hackage.
-data WrappedBTC = WBTC { unwrapBTC :: BTC }
-
-instance FromJSON WrappedBTC where
-    parseJSON (Number n) = pure . WBTC $ case n of
-                              D d -> realToFrac d
-                              I i -> fromIntegral i
-    parseJSON _ = mzero
-
-instance ToJSON WrappedBTC where
-    toJSON (WBTC btc) = toJSON $ toRational btc
-
 -- | A wrapper for a vector of address:amount pairs. The RPC expects that as
 --   an object of "address":"amount" pairs, instead of a vector. So that's what
 --   we give them with AddrAddress's ToJSON.
 newtype AddrAddress = AA (Vector (Address, BTC))
 
 instance ToJSON AddrAddress where
-    toJSON (AA vec) = object . V.toList $ uncurry (.=) . second WBTC <$> vec
+    toJSON (AA vec) = object . V.toList $ uncurry (.=) <$> vec
 

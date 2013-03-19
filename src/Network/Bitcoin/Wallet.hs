@@ -17,7 +17,7 @@ module Network.Bitcoin.Wallet ( Auth(..)
                               , getAccountAddress
                               , getAccount
                               , setAccount
-                              , getAddressByAccount
+                              , getAddressesByAccount
                               , sendToAddress
                               , AddressInfo(..)
                               , listAddressGroupings
@@ -102,7 +102,7 @@ instance FromJSON BitcoindInfo where
     parseJSON (Object o) = BitcoindInfo <$> o .:  "version"
                                         <*> o .:  "protocolversion"
                                         <*> o .:  "walletversion"
-                                        <*> (unwrapBTC <$> o .: "balance")
+                                        <*> o .:  "balance"
                                         <*> o .:  "blocks"
                                         <*> o .:  "connections"
                                         <*> o .:  "proxy"
@@ -110,7 +110,7 @@ instance FromJSON BitcoindInfo where
                                         <*> o .:  "testnet"
                                         <*> o .:  "keypoololddest"
                                         <*> o .:  "keypoolsize"
-                                        <*> (unwrapBTC <$> o .: "paytxfee")
+                                        <*> o .:  "paytxfee"
                                         <*> o .:? "unlocked_until"
                                         <*> o .:  "errors"
     parseJSON _ = mzero
@@ -145,8 +145,8 @@ getAccount :: Auth -> Address -> IO Account
 getAccount auth addr = callApi auth "getaccount" [ tj addr ]
 
 -- | Returns the list of addresses for the given address.
-getAddressByAccount :: Auth -> Account -> IO (Vector Address)
-getAddressByAccount auth acc = callApi auth "getaddressbyaccount" [ tj acc ]
+getAddressesByAccount :: Auth -> Account -> IO (Vector Address)
+getAddressesByAccount auth acc = callApi auth "getAddressesByAccount" [ tj acc ]
 
 -- | Sends some bitcoins to an address.
 sendToAddress :: Auth
@@ -161,7 +161,7 @@ sendToAddress :: Auth
               --   transaction.
               -> IO TransactionID
 sendToAddress auth addr amount comm comm2 =
-    callApi auth "sendtoaddress" [ tj addr, tj $ WBTC amount, tj comm, tj comm2 ]
+    callApi auth "sendtoaddress" [ tj addr, tj amount, tj comm, tj comm2 ]
 
 -- | Information on a given address.
 data AddressInfo = AddressInfo { -- | The address in question.
@@ -176,10 +176,10 @@ data AddressInfo = AddressInfo { -- | The address in question.
 -- | What a silly API.
 instance FromJSON AddressInfo where
     parseJSON (A.Array a) | V.length a == 2 = AddressInfo <$> parseJSON (a ! 0)
-                                                          <*> (unwrapBTC <$> parseJSON (a ! 1))
+                                                          <*> parseJSON (a ! 1)
                                                           <*> pure Nothing
                           | V.length a == 3 = AddressInfo <$> parseJSON (a ! 0)
-                                                          <*> (unwrapBTC <$> parseJSON (a ! 1))
+                                                          <*> parseJSON (a ! 1)
                                                           <*> (Just <$> parseJSON (a ! 2))
                           | otherwise       = mzero
     parseJSON _ = mzero
@@ -221,7 +221,7 @@ verifyMessage auth addr sig msg =
 --   confirmation.
 getReceivedByAddress :: Auth -> Address -> IO BTC
 getReceivedByAddress auth addr =
-    unwrapBTC <$> callApi auth "getreceivedbyaddress" [ tj addr ]
+    callApi auth "getreceivedbyaddress" [ tj addr ]
 
 -- | Returns the total amount received by the given address, with at least the
 --   give number of confirmations.
@@ -232,12 +232,12 @@ getReceivedByAddress' :: Auth
                              --   total.
                       -> IO BTC
 getReceivedByAddress' auth addr minconf =
-    unwrapBTC <$> callApi auth "getreceivedbyaddress" [ tj addr, tj minconf ]
+    callApi auth "getreceivedbyaddress" [ tj addr, tj minconf ]
 
 -- | Returns the total amount received by address with the given account.
 getReceivedByAccount :: Auth -> Account -> IO BTC
 getReceivedByAccount auth acc =
-    unwrapBTC <$> callApi auth "getreceivedbyaccount" [ tj acc ]
+    callApi auth "getreceivedbyaccount" [ tj acc ]
 
 -- | Returns the total amount received by addresses with the given account,
 --   counting only transactions with the given minimum number of confirmations.
@@ -249,13 +249,13 @@ getReceivedByAccount' :: Auth
                       --   transaction to count towards the total.
                       -> IO BTC
 getReceivedByAccount' auth acc minconf =
-    unwrapBTC <$> callApi auth "getreceivedbyaccount" [ tj acc, tj minconf ]
+    callApi auth "getreceivedbyaccount" [ tj acc, tj minconf ]
 
 -- | Returns the server's total available balance.
 getBalance :: Auth
            -> IO BTC
 getBalance auth =
-    unwrapBTC <$> callApi auth "getbalance" []
+    callApi auth "getbalance" []
 
 -- | Returns the balance in the given account, counting only transactions with
 --   at least one confirmation.
@@ -263,7 +263,7 @@ getBalance' :: Auth
             -> Account
             -> IO BTC
 getBalance' auth acc =
-    unwrapBTC <$> callApi auth "getbalance" [ tj acc ]
+    callApi auth "getbalance" [ tj acc ]
 
 -- | Returns the balance in the given account, counting only transactions with
 --   at least the given number of confirmations.
@@ -271,10 +271,10 @@ getBalance'' :: Auth
              -> Account
              -> Int
              -- ^ The minimum number of confirmations needed for a transaction
-             --   to cuont towards the total.
+             --   to count towards the total.
              -> IO BTC
 getBalance'' auth acc minconf =
-    unwrapBTC <$> callApi auth "getbalance" [ tj acc, tj minconf ]
+    callApi auth "getbalance" [ tj acc, tj minconf ]
 
 -- | Move bitcoins from one account in your wallet to another.
 --
@@ -287,7 +287,7 @@ moveBitcoins :: Auth
              -> Text    -- ^ A comment to record for the transaction.
              -> IO ()
 moveBitcoins auth from to amt comm =
-    stupidAPI <$> callApi auth "move" [ tj from, tj to, tj $ WBTC amt, tj one, tj comm ]
+    stupidAPI <$> callApi auth "move" [ tj from, tj to, tj amt, tj one, tj comm ]
         where one = 1 :: Int -- needs a type, else default-integer warnings.
               stupidAPI :: Bool -> ()
               stupidAPI = const ()
@@ -308,7 +308,7 @@ sendFromAccount :: Auth
                 -- ^ An optional comment on who the money is going to.
                 -> IO TransactionID
 sendFromAccount auth from to amount comm comm2 =
-    callApi auth "sendfrom" [ tj from, tj to, tj $ WBTC amount, tj one, tj comm, tj comm2 ]
+    callApi auth "sendfrom" [ tj from, tj to, tj amount, tj one, tj comm, tj comm2 ]
         where one = 1 :: Int -- needs a type, else default-integer warnings.
 
 -- | Send to a whole bunch of address at once.
@@ -345,7 +345,7 @@ data ReceivedByAddress =
 instance FromJSON ReceivedByAddress where
     parseJSON (Object o) = ReceivedByAddress <$> o .: "address"
                                              <*> o .: "account"
-                                             <*> (unwrapBTC <$> o .: "amount")
+                                             <*> o .: "amount"
                                              <*> o .: "confirmations"
     parseJSON _ = mzero
 
@@ -381,7 +381,7 @@ data ReceivedByAccount =
 
 instance FromJSON ReceivedByAccount where
     parseJSON (Object o) = ReceivedByAccount <$> o .: "account"
-                                             <*> (unwrapBTC <$> o .: "amount")
+                                             <*> o .: "amount"
                                              <*> o .: "confirmations"
     parseJSON _ = mzero
 

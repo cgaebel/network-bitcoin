@@ -42,7 +42,7 @@ getDifficulty auth = callApi auth "getdifficulty" []
 --   rejected.
 setTransactionFee :: Auth -> BTC -> IO ()
 setTransactionFee auth fee =
-    stupidAPI <$> callApi auth "settxfee" [ tj $ WBTC fee ]
+    stupidAPI <$> callApi auth "settxfee" [ tj fee ]
         where stupidAPI :: Bool -> ()
               stupidAPI = const ()
 
@@ -150,7 +150,7 @@ data OutputInfo =
 instance FromJSON OutputInfo where
     parseJSON (Object o) = OutputInfo <$> o .: "bestblock"
                                       <*> o .: "confirmations"
-                                      <*> (unwrapBTC <$> o .: "amount")
+                                      <*> o .: "amount"
                                       <*> o .: "scriptPubKey"
                                       <*> o .: "version"
                                       <*> o .: "coinbase"

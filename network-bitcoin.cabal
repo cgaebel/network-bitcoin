@@ -66,10 +66,8 @@ Library
   
   -- Packages needed in order to build this package.
   Build-depends:       
-    aeson == 0.6.*,
+    aeson >= 0.6.1,
     bytestring >= 0.10,
-    attoparsec == 0.10.*,
-    unordered-containers >= 0.2,
     HTTP >= 4000,
     network >= 2.3,
     text >= 0.11,

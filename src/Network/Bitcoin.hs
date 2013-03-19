@@ -72,7 +72,7 @@ module Network.Bitcoin
     , getAccountAddress
     , getAccount
     , setAccount
-    , getAddressByAccount
+    , getAddressesByAccount
     , sendToAddress
     , AddressInfo(..)
     , listAddressGroupings
