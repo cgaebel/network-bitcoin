@@ -108,7 +108,7 @@ instance FromJSON BitcoindInfo where
                                         <*> o .:  "proxy"
                                         <*> o .:  "difficulty"
                                         <*> o .:  "testnet"
-                                        <*> o .:  "keypoololddest"
+                                        <*> o .:  "keypoololdest"
                                         <*> o .:  "keypoolsize"
                                         <*> o .:  "paytxfee"
                                         <*> o .:? "unlocked_until"
