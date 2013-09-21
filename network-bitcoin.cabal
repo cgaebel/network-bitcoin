@@ -60,5 +60,23 @@ Library
     base == 4.*
 
 Source-repository head
-    type: git
-    location: git://github.com/wowus/network-bitcoin.git
+  type: git
+  location: git://github.com/wowus/network-bitcoin.git
+
+Executable network-bitcoin-tests
+  hs-source-dirs: src
+  ghc-options: -Wall
+  main-is: Test/Main.hs
+  build-depends:
+    aeson >= 0.6.1 && < 0.7,
+    bytestring >= 0.9 && < 0.11,
+    attoparsec == 0.10.*,
+    unordered-containers >= 0.2,
+    HTTP >= 4000,
+    network >= 2.3,
+    text >= 0.11,
+    vector >= 0.10,
+    base == 4.*,
+    QuickCheck == 2.5.*,
+    network-bitcoin
+

@@ -7,3 +7,4 @@
 Setup.hs
 dist/
 cabal-dev/
+network-bitcoin-tests

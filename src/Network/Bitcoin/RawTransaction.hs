@@ -11,12 +11,12 @@
 --   Also, documentation for this module is scarce. I would love the addition
 --   of more documentation by anyone who knows what these things are.
 module Network.Bitcoin.RawTransaction ( Auth(..)
-                                      , ScriptSig(..)
                                       , RawTransaction
                                       , getRawTransaction
                                       , TxIn(..)
                                       , TxnOutputType(..)
                                       , ScriptPubKey(..)
+                                      , ScriptSig(..)
                                       , TxOut(..)
                                       , BlockInfo(..)
                                       , RawTransactionInfo(..)
@@ -93,6 +93,27 @@ instance FromJSON TxnOutputType where
                            | otherwise         = mzero
     parseJSON _ = mzero
 
+
+-- | A transaction out of an account.
+data TxOut =
+    TxOut { -- | The amount of bitcoin transferred out.
+            txoutVal :: BTC
+          -- | The public key of the account we sent the money to.
+          , scriptPubKey :: ScriptPubKey
+          }
+    deriving ( Show, Read, Ord, Eq )
+
+instance FromJSON TxOut where
+    parseJSON (Object o) = TxOut <$> o .: "value"
+                                 <*> o .: "scriptPubKey"
+    parseJSON _ = mzero
+
+-- * Scripts
+--   A script is a complex bitcoin construct that provides the creation
+--   of Contracts.
+--   See <https://en.bitcoin.it/wiki/Script> and <https://en.bitcoin.it/wiki/Contracts>.
+--   It consists of two parts - a public key and a signature.
+
 -- | A public key of someone we sent money to.
 data ScriptPubKey = NonStandardScriptPubKey { -- | The JSON "asm" field.
                                               nspkAsm :: HexString
@@ -124,19 +145,17 @@ instance FromJSON ScriptPubKey where
                                                        <*> o .: "hex"
     parseJSON _ = mzero
 
--- | A transaction out of an account.
-data TxOut =
-    TxOut { -- | The amount of bitcoin transferred out.
-            txoutVal :: BTC
-          -- | The public key of the account we sent the money to.
-          , scriptPubKey :: ScriptPubKey
-          }
+-- | A script signature.
+data ScriptSig = ScriptSig { sigAsm :: HexString
+                           , sigHex :: HexString
+                           }
     deriving ( Show, Read, Ord, Eq )
 
-instance FromJSON TxOut where
-    parseJSON (Object o) = TxOut <$> o .: "value"
-                                 <*> o .: "scriptPubKey"
+instance FromJSON ScriptSig where
+    parseJSON (Object o) = ScriptSig <$> o .: "asm"
+                                     <*> o .: "hex"
     parseJSON _ = mzero
+
 
 -- | Information on a single block.
 data BlockInfo = ConfirmedBlock { -- | The number of confirmations a block has.
@@ -201,16 +220,18 @@ getRawTransactionInfo auth txid =
 
 data UnspentTransaction =
     UnspentTransaction { unspentTransactionId :: TransactionID
-                       , outIdx :: Integer
-                       , unspentScriptPubKey :: HexString
-                       , redeemScript :: Maybe HexString
-                       , unspentAmount :: BTC
-                       , usConfirmations :: Integer
-                       }
+                       , outIdx               :: Integer
+                       , unspentAddress       :: Address
+                       , unspentScriptPubKey  :: HexString
+                       , redeemScript         :: Maybe HexString
+                       , unspentAmount        :: BTC
+                       , usConfirmations      :: Integer
+                       } deriving ( Show, Eq )
 
 instance FromJSON UnspentTransaction where
     parseJSON (Object o) = UnspentTransaction <$> o .:  "txid"
                                               <*> o .:  "vout"
+                                              <*> o .:  "address"
                                               <*> o .:  "scriptPubKey"
                                               <*> o .:? "redeemScript"
                                               <*> o .:  "amount"

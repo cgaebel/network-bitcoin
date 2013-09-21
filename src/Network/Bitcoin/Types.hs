@@ -10,13 +10,9 @@ module Network.Bitcoin.Types ( Auth(..)
                              , BTC
                              , Account
                              , Address
-                             , ScriptSig(..)
                              ) where
 
-import Control.Applicative
 import Control.Exception
-import Control.Monad
-import Data.Aeson
 import Data.Fixed
 import Data.Text ( Text )
 import Data.Typeable
@@ -76,19 +72,8 @@ type BTC = Fixed Satoshi
 -- | An address for sending or receiving money.
 type Address = HexString
 
--- | I don't know what this is. A signature of some sort? If you know, please
---   submit a patch documenting this properly!
-data ScriptSig = ScriptSig { sigAsm :: HexString
-                           , sigHex :: HexString
-                           }
-    deriving ( Show, Read, Ord, Eq )
-
-instance FromJSON ScriptSig where
-    parseJSON (Object o) = ScriptSig <$> o .: "asm"
-                                     <*> o .: "hex"
-    parseJSON _ = mzero
-
 -- | An account on the wallet is just a label to easily specify private keys.
 --
 --   The default account is an empty string.
 type Account = Text
+

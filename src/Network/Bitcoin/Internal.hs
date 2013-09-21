@@ -19,6 +19,7 @@ module Network.Bitcoin.Internal ( module Network.Bitcoin.Types
                                 , Nil(..)
                                 , tj
                                 , AddrAddress(..)
+                                , BitcoinRpcResponse(..)
                                 ) where
 
 import           Control.Applicative
@@ -96,12 +97,12 @@ callApi :: FromJSON v
 callApi auth cmd params = readVal =<< callApi' auth jsonRpcReqBody
     where
         readVal bs = case decode' bs of
-                        Just r@(BitcoinRpcResponse {btcError=NoError})
-                            -> return $ btcResult r
-                        Just (BitcoinRpcResponse {btcError=BitcoinRpcError code msg})
-                            -> throw $ BitcoinApiError code msg
-                        Nothing
-                            -> throw $ BitcoinResultTypeError bs
+                         Just r@(BitcoinRpcResponse {btcError=NoError})
+                             -> return $ btcResult r
+                         Just (BitcoinRpcResponse {btcError=BitcoinRpcError code msg})
+                             -> throw $ BitcoinApiError code msg
+                         Nothing
+                             -> throw $ BitcoinResultTypeError bs
         jsonRpcReqBody =
             encode $ object [ "jsonrpc" .= ("2.0" :: Text)
                             , "method"  .= cmd

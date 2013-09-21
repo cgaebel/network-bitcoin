@@ -9,7 +9,6 @@
 module Network.Bitcoin.BlockChain ( Auth(..)
                                   , TransactionID
                                   , BTC
-                                  , ScriptSig(..)
                                   , getBlockCount
                                   , getDifficulty
                                   , setTransactionFee
@@ -28,6 +27,7 @@ import Control.Applicative
 import Control.Monad
 import Data.Aeson
 import Network.Bitcoin.Internal
+import Network.Bitcoin.RawTransaction
 
 -- | Returns the number of blocks in the longest block chain.
 getBlockCount :: Auth -> IO Integer
@@ -139,7 +139,7 @@ data OutputInfo =
                -- | The amount transferred.
                , oiAmount :: BTC
                -- | The public key of the sender.
-               , oiScriptPubKey :: ScriptSig
+               , oiScriptPubKey :: ScriptPubKey
                -- | The version of this transaction.
                , oiVersion :: Integer
                -- | Is this transaction part of the coin base?
@@ -150,7 +150,7 @@ data OutputInfo =
 instance FromJSON OutputInfo where
     parseJSON (Object o) = OutputInfo <$> o .: "bestblock"
                                       <*> o .: "confirmations"
-                                      <*> o .: "amount"
+                                      <*> o .: "value"
                                       <*> o .: "scriptPubKey"
                                       <*> o .: "version"
                                       <*> o .: "coinbase"
