@@ -289,6 +289,7 @@ data DecodedRawTransaction =
                           -- | The vector of transactions out.
                           , decVout :: Vector TxOut
                           }
+    deriving (Show, Eq)
 
 instance FromJSON DecodedRawTransaction where
     parseJSON (Object o) = DecodedRawTransaction <$> o .: "hex"
