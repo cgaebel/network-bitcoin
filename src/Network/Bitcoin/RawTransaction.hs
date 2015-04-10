@@ -344,6 +344,7 @@ data RawSignedTransaction =
     RawSignedTransaction { rawSigned :: HexString
                          , hasCompleteSigSet :: Bool
                          }
+    deriving (Show, Eq)
 
 instance FromJSON RawSignedTransaction where
     parseJSON (Object o) = RawSignedTransaction <$> o .: "hex"
