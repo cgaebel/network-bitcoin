@@ -34,6 +34,7 @@ import           Data.Vector ( Vector )
 import qualified Data.Vector          as V
 import           Network.Bitcoin.Types
 import qualified Data.ByteString      as BS
+import qualified Data.ByteString.Lazy.Char8 as BSL8
 import           Data.Text ( Text )
 import           Network.HTTP.Client
 import           Network.HTTP.Types.Header
@@ -101,13 +102,14 @@ callApi :: FromJSON v
         -> IO v
 callApi client cmd params = readVal =<< client jsonRpcReqBody
     where
-        readVal bs = case decode' bs of
-                         Just r@(BitcoinRpcResponse {btcError=NoError})
+        readVal bs = case eitherDecode' bs of
+                         Right r@(BitcoinRpcResponse {btcError=NoError})
                              -> return $ btcResult r
-                         Just (BitcoinRpcResponse {btcError=BitcoinRpcError code msg})
+                         Right (BitcoinRpcResponse {btcError=BitcoinRpcError code msg})
                              -> throw $ BitcoinApiError code msg
-                         Nothing
-                             -> throw $ BitcoinResultTypeError bs
+                         Left err
+                             -> throw $ BitcoinResultTypeError (BSL8.pack err)
+
         jsonRpcReqBody =
             encode $ object [ "jsonrpc" .= ("2.0" :: Text)
                             , "method"  .= cmd

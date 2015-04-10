@@ -289,9 +289,10 @@ data DecodedRawTransaction =
                           -- | The vector of transactions out.
                           , decVout :: Vector TxOut
                           }
+    deriving (Show, Eq)
 
 instance FromJSON DecodedRawTransaction where
-    parseJSON (Object o) = DecodedRawTransaction <$> o .: "hex"
+    parseJSON (Object o) = DecodedRawTransaction <$> o .:? "hex" .!= ""
                                                  <*> o .: "version"
                                                  <*> o .: "locktime"
                                                  <*> o .: "vin"
@@ -300,7 +301,9 @@ instance FromJSON DecodedRawTransaction where
 
 -- | Decodes a raw transaction into a more accessible data structure.
 decodeRawTransaction :: Client -> RawTransaction -> IO DecodedRawTransaction
-decodeRawTransaction client tx = callApi client "decoderawtransaction" [ tj tx ]
+decodeRawTransaction client tx = do
+  res <- callApi client "decoderawtransaction" [ tj tx ]
+  return res { decRaw = tx }
 
 -- | Used internally to give a new 'ToJSON' instance for 'UnspentTransaction'.
 newtype UnspentForSigning = UFS UnspentTransaction
@@ -341,6 +344,7 @@ data RawSignedTransaction =
     RawSignedTransaction { rawSigned :: HexString
                          , hasCompleteSigSet :: Bool
                          }
+    deriving (Show, Eq)
 
 instance FromJSON RawSignedTransaction where
     parseJSON (Object o) = RawSignedTransaction <$> o .: "hex"
